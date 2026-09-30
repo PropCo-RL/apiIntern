@@ -15,7 +15,7 @@
     .notice-box { background: #fff3cd; color: #856404; padding: 0.8rem; border-radius: 6px; font-size: 0.85rem; margin: 0.8rem 0; border: 1px solid #ffeeba; }
     .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; text-align: center; }
     .btn-icon svg { width: 18px; height: 18px; stroke-width: 2; }
-    .info-grid { display: grid; gap: 0.5rem; background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    .booking-card { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; }
   </style>
 </head>
 <body>
@@ -30,11 +30,11 @@
   <main class="container">
     <article class="portal-card">
 
-      <!-- STEP 1: EMAIL EINGABE -->
+      <!-- STEP 1: EMAIL / ID EINGABE -->
       <div id="email-box">
         <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="key-round" style="color:var(--pico-primary);"></i> Portal Login</h2>
-        <p>Geben Sie Ihre gebuchte E-Mail-Adresse ein, um einen 6-stelligen Sicherheitscode zu erhalten:</p>
-        <input type="email" id="email-input" placeholder="z. B. einkauf@musterbau.de">
+        <p>Geben Sie Ihre E-Mail-Adresse oder Buchungs-ID ein, um Ihren Sicherheitscode zu erhalten:</p>
+        <input type="text" id="email-input" placeholder="z. B. einkauf@musterbau.de oder Buchungs-ID">
         <button onclick="requestOTP()" id="btn-request" class="btn-icon">
           <i data-lucide="send"></i> Code anfordern
         </button>
@@ -56,12 +56,8 @@
       <div id="dashboard-box" class="hidden">
         <h2>Willkommen, <span id="gast-name"></span></h2>
 
-        <div class="info-grid">
-          <div><strong>Wohnung:</strong> <span id="wohnung"></span></div>
-          <div><strong>Zeitraum:</strong> <span id="anreise"></span> bis <span id="abreise"></span></div>
-          <div><strong>Status:</strong> <span id="status" class="badge"></span></div>
-          <div><strong>Rechnung:</strong> <a id="rechnung-link" href="#" target="_blank" style="display:inline-flex; align-items:center; gap:0.3rem;"><i data-lucide="file-down" style="width:16px;"></i> PDF Herunterladen</a></div>
-        </div>
+        <!-- DYNAMISCHE LISTE ALLER BUCHUNGEN -->
+        <div id="bookings-list"></div>
 
         <hr style="margin: 1.5rem 0;">
 
@@ -104,7 +100,9 @@
         <!-- FORMULAR 2: STORNIEREN -->
         <div id="cancel-form" class="action-box hidden">
           <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="calendar-x"></i> Buchung stornieren</h4>
-          <div id="storno-rules" class="notice-box"></div>
+          <div id="storno-rules" class="notice-box">
+            <strong>Storno-Frist:</strong> Kostenfreie Stornierung ist bis <strong>14 Tage</strong> vor Beginn des Abrechnungszeitraums möglich.
+          </div>
           <label>Auswahl:
             <select id="cancel-type" onchange="toggleCancelDate(this.value)">
               <option value="Wohnung ab sofort frei">Wohnung ist ab sofort frei</option>
@@ -157,7 +155,7 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwlEvmXJwyzfjAP0CHX5_8Br1cVWuHbVlmGZY2vsHEjMiSocFEjWuIC-O6611NqFY48/exec";
-    let currentEmail = "";
+    let currentInput = "";
 
     document.addEventListener("DOMContentLoaded", () => {
       renderIcons();
@@ -168,18 +166,18 @@
     }
 
     async function requestOTP() {
-      const email = document.getElementById('email-input').value;
-      if (!email) return;
+      const input = document.getElementById('email-input').value;
+      if (!input) return;
 
       const btn = document.getElementById('btn-request');
       btn.ariaBusy = "true";
 
       try {
-        const res = await fetch(`${API_URL}?action=requestOTP&email=${encodeURIComponent(email)}`).then(r => r.json());
+        const res = await fetch(`${API_URL}?action=requestOTP&email=${encodeURIComponent(input)}`).then(r => r.json());
         btn.ariaBusy = "false";
 
         if (res.success) {
-          currentEmail = email;
+          currentInput = input;
           document.getElementById('email-box').classList.add('hidden');
           document.getElementById('otp-box').classList.remove('hidden');
           renderIcons();
@@ -200,7 +198,7 @@
       btn.ariaBusy = "true";
 
       try {
-        const res = await fetch(`${API_URL}?action=verifyOTP&email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`).then(r => r.json());
+        const res = await fetch(`${API_URL}?action=verifyOTP&email=${encodeURIComponent(currentInput)}&otp=${encodeURIComponent(otp)}`).then(r => r.json());
         btn.ariaBusy = "false";
 
         if (res.found) {
@@ -208,19 +206,30 @@
           document.getElementById('dashboard-box').classList.remove('hidden');
 
           document.getElementById('gast-name').innerText = res.gast;
-          document.getElementById('wohnung').innerText = res.wohnung;
-          document.getElementById('anreise').innerText = res.anreise;
-          document.getElementById('abreise').innerText = res.abreise;
-          document.getElementById('status').innerText = res.status;
 
-          if (res.rechnung) {
-            document.getElementById('rechnung-link').href = res.rechnung;
+          // Multi-Buchungen auflisten
+          const listContainer = document.getElementById('bookings-list');
+          listContainer.innerHTML = "";
+
+          if (res.bookings && res.bookings.length > 0) {
+            res.bookings.forEach((b) => {
+              listContainer.innerHTML += `
+                <div class="booking-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                    <strong>Wohnung: ${b.wohnung}</strong>
+                    <span class="badge">${b.status}</span>
+                  </div>
+                  <div style="font-size:0.9rem; color:var(--pico-muted-color);">
+                    Zeitraum: <strong>${b.anreise}</strong> bis <strong>${b.abreise}</strong><br>
+                    Buchungs-ID: <code>${b.lodgifyId}</code> | Rechnungs-ID: <code>${b.rechnungId}</code>
+                  </div>
+                </div>
+              `;
+            });
           } else {
-            document.getElementById('rechnung-link').innerText = "Keine Rechnung vorhanden";
-            document.getElementById('rechnung-link').removeAttribute('href');
+            listContainer.innerHTML = "<p>Keine aktiven Buchungen gefunden.</p>";
           }
 
-          setupStornoRules(res.anreiseRaw, res.abreiseRaw);
           renderIcons();
         } else {
           showMsg('otp-msg', res.message);
@@ -248,19 +257,6 @@
         document.getElementById('cancel-date-div').classList.remove('hidden');
       } else {
         document.getElementById('cancel-date-div').classList.add('hidden');
-      }
-    }
-
-    function setupStornoRules(anreiseStr, abreiseStr) {
-      const d1 = new Date(anreiseStr);
-      const d2 = new Date(abreiseStr);
-      const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-
-      const stornoBox = document.getElementById('storno-rules');
-      if (diffDays < 7) {
-        stornoBox.innerHTML = "<strong>Storno-Frist:</strong> Bei Buchungen unter 7 Tagen ist eine kostenfreie Stornierung bis <strong>7 Tage</strong> vor Beginn möglich.";
-      } else {
-        stornoBox.innerHTML = "<strong>Storno-Frist:</strong> Kostenfreie Stornierung ist bis <strong>14 Tage</strong> vor Beginn des Abrechnungszeitraums möglich.";
       }
     }
 
@@ -314,7 +310,7 @@
           method: 'POST',
           body: JSON.stringify({
             action: 'submitGuestAction',
-            email: currentEmail,
+            email: currentInput,
             actionType: actionType,
             payload: payload
           })
