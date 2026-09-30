@@ -9,14 +9,18 @@
   <style>
     :root { --pico-font-size: 95%; }
     .hidden { display: none !important; }
-    .portal-card { max-width: 600px; margin: 2rem auto; }
-    .badge { background: var(--pico-primary); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
-    .action-box { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 10px; padding: 1.2rem; margin-top: 1rem; }
-    .notice-box { background: #fff3cd; color: #856404; padding: 0.8rem; border-radius: 6px; font-size: 0.85rem; margin: 0.8rem 0; border: 1px solid #ffeeba; }
-    .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; text-align: center; }
-    .btn-icon svg { width: 18px; height: 18px; stroke-width: 2; }
-    .booking-card { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; }
+    .portal-card { max-width: 680px; margin: 2rem auto; }
+    .badge { background: var(--pico-primary); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .booking-card { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
     .admin-bar { background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.85rem; padding: 0.4rem 0.8rem; width: auto; }
+    .btn-icon svg { width: 16px; height: 16px; stroke-width: 2; }
+    .btn-checkin { background-color: #2563eb; color: white; width: 100%; margin-top: 0.8rem; font-weight: 600; padding: 0.6rem; border: none; border-radius: 6px; }
+    .btn-checkin:hover { background-color: #1d4ed8; }
+    .invoice-item { display: flex; align-items: center; justify-content: space-between; background: var(--pico-background-color); padding: 0.5rem 0.8rem; border-radius: 6px; margin-top: 0.4rem; font-size: 0.85rem; border: 1px solid var(--pico-border-color); }
+    .action-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--pico-border-color); }
+    dialog article { max-width: 520px; text-align: left; }
+    .checkin-code-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 1rem; border-radius: 8px; text-align: center; margin-top: 1rem; font-size: 1.2rem; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -36,7 +40,7 @@
         <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="key-round" style="color:var(--pico-primary);"></i> Portal Login</h2>
         <p>Geben Sie Ihre E-Mail-Adresse oder Buchungs-ID ein, um Ihren Sicherheitscode zu erhalten:</p>
         <input type="text" id="email-input" placeholder="z. B. einkauf@musterbau.de oder Buchungs-ID">
-        <button onclick="requestOTP()" id="btn-request" class="btn-icon">
+        <button onclick="requestOTP()" id="btn-request" class="btn-icon" style="width:100%;">
           <i data-lucide="send"></i> Code anfordern
         </button>
         <p id="email-msg" style="color:var(--pico-del-color);" class="hidden"></p>
@@ -47,7 +51,7 @@
         <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="shield-check" style="color:var(--pico-primary);"></i> Code eingeben</h2>
         <p>Wir haben einen 6-stelligen Code an Ihre E-Mail geschickt.</p>
         <input type="text" id="otp-input" placeholder="6-stelliger Code">
-        <button onclick="verifyOTP()" id="btn-verify" class="btn-icon">
+        <button onclick="verifyOTP()" id="btn-verify" class="btn-icon" style="width:100%;">
           <i data-lucide="log-in"></i> Anmelden
         </button>
         <p id="otp-msg" style="color:var(--pico-del-color);" class="hidden"></p>
@@ -55,119 +59,42 @@
 
       <!-- STEP 3: DASHBOARD -->
       <div id="dashboard-box" class="hidden">
-        <h2>Willkommen, <span id="gast-name"></span></h2>
+        <h2 style="margin-bottom:0.2rem;">Willkommen, <span id="gast-name"></span></h2>
+        <p style="color:var(--pico-muted-color); font-size:0.9rem; margin-bottom:1.5rem;">Übersicht Ihrer aktiven und kommenden Buchungen</p>
 
         <!-- ADMIN MODUS FILTER -->
         <div id="admin-panel" class="admin-bar hidden">
           <strong style="display:flex; align-items:center; gap:0.3rem;"><i data-lucide="shield"></i> Admin-Ansicht (Kunden-Filter)</strong>
-          <p style="font-size:0.85rem; margin-bottom:0.5rem;">Geben Sie eine Kunden-E-Mail oder Buchungs-ID ein, um die Ansicht zu filtern:</p>
+          <p style="font-size:0.85rem; margin-bottom:0.5rem;">E-Mail oder Buchungs-ID eingeben:</p>
           <div style="display:flex; gap:0.5rem;">
-            <input type="text" id="admin-filter-input" placeholder="E-Mail oder ID filtern..." style="margin-bottom:0;">
+            <input type="text" id="admin-filter-input" placeholder="E-Mail oder ID..." style="margin-bottom:0;">
             <button onclick="applyAdminFilter()" style="width:auto; padding:0.4rem 1rem;">Filtern</button>
           </div>
         </div>
 
-        <!-- DYNAMISCHE LISTE ALLER BUCHUNGEN -->
         <div id="bookings-list"></div>
 
-        <hr style="margin: 1.5rem 0;">
-
-        <h3>Was möchten Sie tun?</h3>
-
-        <div style="display:grid; gap:0.6rem;">
-          <button class="outline btn-icon" onclick="toggleSection('extend-form')">
-            <i data-lucide="calendar-plus"></i> Buchung verlängern
-          </button>
-          <button class="outline btn-icon" onclick="toggleSection('cancel-form')">
-            <i data-lucide="calendar-x"></i> Buchung stornieren
-          </button>
-          <button class="outline btn-icon" onclick="toggleSection('wgb-form')">
-            <i data-lucide="file-text"></i> Wohnungsgeberbestätigung beantragen
-          </button>
-          <button class="outline btn-icon" onclick="toggleSection('address-form')">
-            <i data-lucide="building-2"></i> Zweite Rechnungsanschrift hinzufügen
-          </button>
-        </div>
-
-        <!-- FORMULAR 1: VERLÄNGERN -->
-        <div id="extend-form" class="action-box hidden">
-          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="calendar-plus"></i> Buchung verlängern</h4>
-          <label>Neues Enddatum:
-            <input type="date" id="ext-date">
-          </label>
-          <label>Abrechnungsrhythmus:
-            <select id="ext-rhythm">
-              <option value="Alle 7 Tage">Alle 7 Tage</option>
-              <option value="Alle 14 Tage">Alle 14 Tage</option>
-              <option value="Alle 30 Tage">Alle 30 Tage</option>
-            </select>
-          </label>
-          <label>
-            <input type="checkbox" id="ext-agb"> Ich bestätige die AGB und die verbindlichen Stornobedingungen für die Verlängerung.
-          </label>
-          <button onclick="submitExtend()" class="btn-icon"><i data-lucide="check-circle"></i> Verlängerung kostenpflichtig anfragen</button>
-        </div>
-
-        <!-- FORMULAR 2: STORNIEREN -->
-        <div id="cancel-form" class="action-box hidden">
-          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="calendar-x"></i> Buchung stornieren</h4>
-          <div id="storno-rules" class="notice-box">
-            <strong>Storno-Frist:</strong> Kostenfreie Stornierung ist bis <strong>14 Tage</strong> vor Beginn des Abrechnungszeitraums möglich.
-          </div>
-          <label>Auswahl:
-            <select id="cancel-type" onchange="toggleCancelDate(this.value)">
-              <option value="Wohnung ab sofort frei">Wohnung ist ab sofort frei</option>
-              <option value="Auszugsdatum wählen">Auszugsdatum wählen</option>
-            </select>
-          </label>
-          <div id="cancel-date-div" class="hidden">
-            <label>Geplantes Auszugsdatum:
-              <input type="date" id="cancel-date">
-            </label>
-          </div>
-          <button style="background-color: var(--pico-del-color); border-color: var(--pico-del-color);" onclick="submitCancel()" class="btn-icon"><i data-lucide="alert-triangle"></i> Stornierung übermitteln</button>
-        </div>
-
-        <!-- FORMULAR 3: WGB -->
-        <div id="wgb-form" class="action-box hidden">
-          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="file-text"></i> Wohnungsgeberbestätigung</h4>
-          <label>Namen aller einziehenden Personen:
-            <textarea id="wgb-names" placeholder="Max Mustermann, Erika Mustermann"></textarea>
-          </label>
-          <label>Einzugsdatum:
-            <input type="date" id="wgb-date">
-          </label>
-          <button onclick="submitWGB()" class="btn-icon"><i data-lucide="send"></i> WGB Beantragen</button>
-        </div>
-
-        <!-- FORMULAR 4: RECHNUNGSANSCHRIFT -->
-        <div id="address-form" class="action-box hidden">
-          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="building-2"></i> Weitere Rechnungsanschrift</h4>
-          <label>Firmenname / Name:
-            <input type="text" id="addr-company" placeholder="Muster Firma GmbH">
-          </label>
-          <label>Vollständige Anschrift:
-            <textarea id="addr-text" placeholder="Straße, Nr., PLZ, Ort"></textarea>
-          </label>
-          <div class="notice-box">
-            <strong>Wichtiger Hinweis:</strong> Die ursprünglich buchende Firma bleibt bis zur finalen Abreise voll haftbar für alle Forderungen.
-          </div>
-          <label>
-            <input type="checkbox" id="addr-confirm"> Ich bestätige, dass die ursprüngliche Firma weiterhin haftbar bleibt.
-          </label>
-          <button onclick="submitAddress()" class="btn-icon"><i data-lucide="save"></i> Zweite Anschrift hinterlegen</button>
-        </div>
-
-        <p id="action-msg" style="color:var(--pico-ins-color); font-weight:bold; text-align:center; margin-top:15px;"></p>
       </div>
 
     </article>
   </main>
 
+  <!-- MODAL FÜR CHECK-IN & AKTIONEN -->
+  <dialog id="action-modal">
+    <article>
+      <header>
+        <button aria-label="Close" rel="prev" onclick="closeModal()"></button>
+        <h3 id="modal-title" style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;"></h3>
+      </header>
+      <div id="modal-body"></div>
+    </article>
+  </dialog>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwlEvmXJwyzfjAP0CHX5_8Br1cVWuHbVlmGZY2vsHEjMiSocFEjWuIC-O6611NqFY48/exec";
     let currentInput = "";
     let currentOTP = "";
+    let currentBookings = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       renderIcons();
@@ -225,37 +152,8 @@
             document.getElementById('admin-panel').classList.remove('hidden');
           }
 
-          const listContainer = document.getElementById('bookings-list');
-          listContainer.innerHTML = "";
-
-          if (res.bookings && res.bookings.length > 0) {
-            res.bookings.forEach((b) => {
-              const downloadBtn = b.pdfUrl && b.pdfUrl.startsWith('http') 
-                ? `<a href="${b.pdfUrl}" target="_blank" role="button" class="outline contrast" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.5rem;"><i data-lucide="file-down" style="width:14px;"></i> Rechnung (PDF) herunterladen</a>`
-                : `<span style="font-size:0.8rem; color:var(--pico-muted-color); display:block; margin-top:0.4rem;">PDF wird vorbereitet...</span>`;
-
-              listContainer.innerHTML += `
-                <div class="booking-card">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                    <strong>Wohnung: ${b.wohnung}</strong>
-                    <span class="badge">${b.status}</span>
-                  </div>
-                  <div style="font-size:0.9rem; color:var(--pico-muted-color);">
-                    Gast / Firma: <strong>${b.gast}</strong><br>
-                    Zeitraum: <strong>${b.anreise}</strong> bis <strong>${b.abreise}</strong><br>
-                    Buchungs-ID: <code>${b.lodgifyId}</code> | Rechnungs-ID: <code>${b.rechnungId}</code>
-                  </div>
-                  <div>
-                    ${downloadBtn}
-                  </div>
-                </div>
-              `;
-            });
-          } else {
-            listContainer.innerHTML = "<p>Keine passenden Buchungen gefunden.</p>";
-          }
-
-          renderIcons();
+          currentBookings = res.bookings || [];
+          renderBookings();
         } else {
           showMsg('otp-msg', res.message);
         }
@@ -265,76 +163,224 @@
       }
     }
 
+    function renderBookings() {
+      const listContainer = document.getElementById('bookings-list');
+      listContainer.innerHTML = "";
+
+      if (currentBookings.length === 0) {
+        listContainer.innerHTML = "<p>Keine passenden Buchungen gefunden.</p>";
+        return;
+      }
+
+      currentBookings.forEach((b, idx) => {
+        let invoicesHtml = "";
+        if (b.invoices && b.invoices.length > 0) {
+          b.invoices.forEach(inv => {
+            const btn = inv.pdfUrl && inv.pdfUrl.startsWith('http')
+              ? `<a href="${inv.pdfUrl}" target="_blank" class="outline contrast btn-icon" style="padding:0.2rem 0.5rem;"><i data-lucide="file-down"></i> PDF Download</a>`
+              : `<small style="color:var(--pico-muted-color);">PDF in Bearbeitung</small>`;
+
+            invoicesHtml += `
+              <div class="invoice-item">
+                <span>Rechnung: <code>${inv.rechnungId}</code></span>
+                ${btn}
+              </div>
+            `;
+          });
+        } else {
+          invoicesHtml = `<small style="color:var(--pico-muted-color);">Keine Rechnungen hinterlegt.</small>`;
+        }
+
+        listContainer.innerHTML += `
+          <div class="booking-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h3 style="margin:0; font-size:1.15rem; display:flex; align-items:center; gap:0.4rem;">
+                  <i data-lucide="building" style="color:var(--pico-primary); width:20px;"></i> ${b.wohnungTitle}
+                </h3>
+                <div style="font-size:0.85rem; color:var(--pico-muted-color); margin-top:0.2rem;">
+                  ${b.wohnungAddress}<br>
+                  <strong>Etage:</strong> ${b.etage} | <strong>Lage:</strong> ${b.seite}
+                </div>
+              </div>
+              <span class="badge">${b.status}</span>
+            </div>
+
+            <button class="btn-checkin btn-icon" onclick="openCheckinModal(${idx})">
+              <i data-lucide="key"></i> Check-in & Schlüssel-Code anzeigen
+            </button>
+
+            <div style="font-size:0.9rem; margin-top:0.8rem; border-top:1px solid var(--pico-border-color); padding-top:0.6rem;">
+              Gast / Firma: <strong>${b.gast}</strong><br>
+              Zeitraum: <strong>${b.anreise}</strong> bis <strong>${b.abreise}</strong><br>
+              Buchungs-ID: <code>${b.lodgifyId}</code>
+            </div>
+
+            <div style="margin-top:0.8rem;">
+              <strong style="font-size:0.85rem; display:block; margin-bottom:0.2rem;">Rechnungen (${b.invoices.length}):</strong>
+              ${invoicesHtml}
+            </div>
+
+            <div class="action-grid">
+              <button class="outline btn-icon" onclick="openActionModal(${idx}, 'extend')"><i data-lucide="calendar-plus"></i> Verlängern</button>
+              <button class="outline btn-icon" onclick="openActionModal(${idx}, 'cancel')"><i data-lucide="calendar-x"></i> Stornieren</button>
+              <button class="outline btn-icon" onclick="openActionModal(${idx}, 'wgb')"><i data-lucide="file-text"></i> WGB</button>
+              <button class="outline btn-icon" onclick="openActionModal(${idx}, 'address')"><i data-lucide="building-2"></i> Anschrift</button>
+            </div>
+          </div>
+        `;
+      });
+
+      renderIcons();
+    }
+
+    function openCheckinModal(idx) {
+      const b = currentBookings[idx];
+      const modal = document.getElementById('action-modal');
+      const titleEl = document.getElementById('modal-title');
+      const bodyEl = document.getElementById('modal-body');
+
+      titleEl.innerHTML = `<i data-lucide="key" style="color:var(--pico-primary);"></i> Check-in & Zugangscode`;
+
+      if (b.isBookingCom) {
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für Booking.com Buchung: <strong>${b.wohnungTitle}</strong></p>
+          <label style="margin:1rem 0;">
+            <input type="checkbox" id="chk-rules" onchange="document.getElementById('checkin-code-display').classList.toggle('hidden', !this.checked)"> 
+            Ich bestätige, dass ich die Hausordnung gelesen habe und akzeptiere.
+          </label>
+          <div id="checkin-code-display" class="checkin-code-box hidden">
+            ${b.checkinInfo}
+          </div>
+        `;
+      } else if (b.isPaid) {
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Zahlungsstatus: <strong>Bezahlt</strong></p>
+          <div class="checkin-code-box">
+            ${b.checkinInfo}
+          </div>
+        `;
+      } else {
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für Buchung: <strong>${b.wohnungTitle}</strong></p>
+          <div style="background:#fff3cd; color:#856404; padding:0.8rem; border-radius:6px; font-size:0.85rem; margin-bottom:1rem;">
+            <strong>Hinweis:</strong> Die Rechnung für diese Buchung steht aktuell auf "Offen". Der Check-in Code kann erst nach Zahlungsnachweis freigeschaltet werden.
+          </div>
+          <label>Zahlungsbeleg hochladen (PDF oder Bild):
+            <input type="file" id="receipt-file" accept="image/*,application/pdf">
+          </label>
+          <button class="btn-icon" style="width:100%; margin-top:0.8rem;" onclick="uploadReceipt('${b.lodgifyId}')">
+            <i data-lucide="upload-cloud"></i> Beleg einreichen & Prüfen
+          </button>
+        `;
+      }
+
+      modal.showModal();
+      renderIcons();
+    }
+
+    async function uploadReceipt(lodgifyId) {
+      alert("Ihr Beleg wird zur Prüfung übermittelt.");
+      closeModal();
+    }
+
     function applyAdminFilter() {
       const val = document.getElementById('admin-filter-input').value;
       verifyOTP(val);
     }
 
-    function toggleSection(id) {
-      ['extend-form', 'cancel-form', 'wgb-form', 'address-form'].forEach(sec => {
-        const el = document.getElementById(sec);
-        if (sec === id) {
-          el.classList.toggle('hidden');
-        } else {
-          el.classList.add('hidden');
-        }
-      });
+    function openActionModal(idx, type) {
+      const b = currentBookings[idx];
+      const modal = document.getElementById('action-modal');
+      const titleEl = document.getElementById('modal-title');
+      const bodyEl = document.getElementById('modal-body');
+
+      if (type === 'extend') {
+        titleEl.innerHTML = `<i data-lucide="calendar-plus"></i> Buchung verlängern`;
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für: <strong>${b.wohnungTitle}</strong> (ID: ${b.lodgifyId})</p>
+          <label>Neues Enddatum: <input type="date" id="m-ext-date"></label>
+          <label>Abrechnungsrhythmus:
+            <select id="m-ext-rhythm">
+              <option value="Alle 7 Tage">Alle 7 Tage</option>
+              <option value="Alle 14 Tage">Alle 14 Tage</option>
+              <option value="Alle 30 Tage">Alle 30 Tage</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="m-ext-agb"> AGB & Stornobedingungen bestätigen.</label>
+          <button class="btn-icon" style="width:100%; margin-top:1rem;" onclick="submitActionModal('${type}', '${b.lodgifyId}')">Verlängerung anfragen</button>
+        `;
+      } else if (type === 'cancel') {
+        titleEl.innerHTML = `<i data-lucide="calendar-x"></i> Buchung stornieren`;
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für: <strong>${b.wohnungTitle}</strong> (ID: ${b.lodgifyId})</p>
+          <label>Option:
+            <select id="m-cancel-type" onchange="document.getElementById('m-cancel-date-div').classList.toggle('hidden', this.value !== 'Auszugsdatum wählen')">
+              <option value="Wohnung ab sofort frei">Ab sofort frei</option>
+              <option value="Auszugsdatum wählen">Auszugsdatum wählen</option>
+            </select>
+          </label>
+          <div id="m-cancel-date-div" class="hidden">
+            <label>Geplantes Auszugsdatum: <input type="date" id="m-cancel-date"></label>
+          </div>
+          <button class="btn-icon" style="width:100%; margin-top:1rem; background-color:var(--pico-del-color); border-color:var(--pico-del-color);" onclick="submitActionModal('${type}', '${b.lodgifyId}')">Stornierung übermitteln</button>
+        `;
+      } else if (type === 'wgb') {
+        titleEl.innerHTML = `<i data-lucide="file-text"></i> Wohnungsgeberbestätigung`;
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für: <strong>${b.wohnungTitle}</strong></p>
+          <label>Namen aller Personen: <textarea id="m-wgb-names" placeholder="Max Mustermann, Erika Mustermann"></textarea></label>
+          <label>Einzugsdatum: <input type="date" id="m-wgb-date"></label>
+          <button class="btn-icon" style="width:100%; margin-top:1rem;" onclick="submitActionModal('${type}', '${b.lodgifyId}')">WGB Beantragen</button>
+        `;
+      } else if (type === 'address') {
+        titleEl.innerHTML = `<i data-lucide="building-2"></i> Zweite Rechnungsanschrift`;
+        bodyEl.innerHTML = `
+          <p style="font-size:0.85rem; color:var(--pico-muted-color);">Für: <strong>${b.wohnungTitle}</strong></p>
+          <label>Firmenname / Name: <input type="text" id="m-addr-company"></label>
+          <label>Anschrift: <textarea id="m-addr-text" placeholder="Straße, PLZ, Ort"></textarea></label>
+          <label><input type="checkbox" id="m-addr-confirm"> Ursprüngliche Firma bleibt haftbar.</label>
+          <button class="btn-icon" style="width:100%; margin-top:1rem;" onclick="submitActionModal('${type}', '${b.lodgifyId}')">Anschrift hinterlegen</button>
+        `;
+      }
+
+      modal.showModal();
       renderIcons();
     }
 
-    function toggleCancelDate(val) {
-      if (val === 'Auszugsdatum wählen') {
-        document.getElementById('cancel-date-div').classList.remove('hidden');
-      } else {
-        document.getElementById('cancel-date-div').classList.add('hidden');
-      }
+    function closeModal() {
+      document.getElementById('action-modal').close();
     }
 
-    function submitExtend() {
-      const date = document.getElementById('ext-date').value;
-      const rhythm = document.getElementById('ext-rhythm').value;
-      const agb = document.getElementById('ext-agb').checked;
+    async function submitActionModal(actionType, lodgifyId) {
+      let payload = { lodgifyId: lodgifyId };
 
-      if (!date || !agb) {
-        alert("Bitte wählen Sie ein Datum und bestätigen Sie die AGB.");
-        return;
+      if (actionType === 'extend') {
+        const date = document.getElementById('m-ext-date').value;
+        const rhythm = document.getElementById('m-ext-rhythm').value;
+        const agb = document.getElementById('m-ext-agb').checked;
+        if (!date || !agb) { alert("Bitte Datum wählen und AGB bestätigen."); return; }
+        payload.endDate = date; payload.rhythm = rhythm;
+      } else if (actionType === 'cancel') {
+        const type = document.getElementById('m-cancel-type').value;
+        const date = document.getElementById('m-cancel-date') ? document.getElementById('m-cancel-date').value : "";
+        if (type === 'Auszugsdatum wählen' && !date) { alert("Bitte Auszugsdatum wählen."); return; }
+        payload.type = type; payload.date = date || 'Ab sofort';
+      } else if (actionType === 'wgb') {
+        const names = document.getElementById('m-wgb-names').value;
+        const date = document.getElementById('m-wgb-date').value;
+        if (!names || !date) { alert("Bitte Ausfüllen."); return; }
+        payload.names = names; payload.moveInDate = date;
+      } else if (actionType === 'address') {
+        const company = document.getElementById('m-addr-company').value;
+        const text = document.getElementById('m-addr-text').value;
+        const confirm = document.getElementById('m-addr-confirm').checked;
+        if (!company || !text || !confirm) { alert("Bitte Ausfüllen & Haftung bestätigen."); return; }
+        payload.company = company; payload.address = text;
       }
-      sendAction('extend', { endDate: date, rhythm: rhythm });
-    }
 
-    function submitCancel() {
-      const type = document.getElementById('cancel-type').value;
-      const date = document.getElementById('cancel-date').value;
-      if (type === 'Auszugsdatum wählen' && !date) {
-        alert("Bitte wählen Sie ein Auszugsdatum.");
-        return;
-      }
-      sendAction('cancel', { type: type, date: date || 'Ab sofort' });
-    }
+      closeModal();
 
-    function submitWGB() {
-      const names = document.getElementById('wgb-names').value;
-      const date = document.getElementById('wgb-date').value;
-      if (!names || !date) {
-        alert("Bitte tragen Sie die Namen und das Datum ein.");
-        return;
-      }
-      sendAction('wgb', { names: names, moveInDate: date });
-    }
-
-    function submitAddress() {
-      const company = document.getElementById('addr-company').value;
-      const text = document.getElementById('addr-text').value;
-      const confirm = document.getElementById('addr-confirm').checked;
-
-      if (!company || !text || !confirm) {
-        alert("Bitte füllen Sie alle Felder aus und bestätigen Sie den Haftungshinweis.");
-        return;
-      }
-      sendAction('address', { company: company, address: text });
-    }
-
-    async function sendAction(actionType, payload) {
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
@@ -347,11 +393,10 @@
         }).then(r => r.json());
 
         if (res.success) {
-          document.getElementById('action-msg').innerText = res.message;
-          toggleSection('');
+          alert(res.message);
         }
       } catch (err) {
-        alert("Fehler beim Übermitteln der Anfrage.");
+        alert("Fehler beim Übermitteln.");
       }
     }
 
