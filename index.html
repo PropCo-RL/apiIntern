@@ -16,6 +16,7 @@
     .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; text-align: center; }
     .btn-icon svg { width: 18px; height: 18px; stroke-width: 2; }
     .booking-card { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; }
+    .admin-bar { background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem; }
   </style>
 </head>
 <body>
@@ -55,6 +56,16 @@
       <!-- STEP 3: DASHBOARD -->
       <div id="dashboard-box" class="hidden">
         <h2>Willkommen, <span id="gast-name"></span></h2>
+
+        <!-- ADMIN MODUS FILTER -->
+        <div id="admin-panel" class="admin-bar hidden">
+          <strong style="display:flex; align-items:center; gap:0.3rem;"><i data-lucide="shield"></i> Admin-Ansicht (Kunden-Filter)</strong>
+          <p style="font-size:0.85rem; margin-bottom:0.5rem;">Geben Sie eine Kunden-E-Mail oder Buchungs-ID ein, um die Ansicht zu filtern:</p>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="admin-filter-input" placeholder="E-Mail oder ID filtern..." style="margin-bottom:0;">
+            <button onclick="applyAdminFilter()" style="width:auto; padding:0.4rem 1rem;">Filtern</button>
+          </div>
+        </div>
 
         <!-- DYNAMISCHE LISTE ALLER BUCHUNGEN -->
         <div id="bookings-list"></div>
@@ -156,6 +167,7 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwlEvmXJwyzfjAP0CHX5_8Br1cVWuHbVlmGZY2vsHEjMiSocFEjWuIC-O6611NqFY48/exec";
     let currentInput = "";
+    let currentOTP = "";
 
     document.addEventListener("DOMContentLoaded", () => {
       renderIcons();
@@ -190,15 +202,17 @@
       }
     }
 
-    async function verifyOTP() {
-      const otp = document.getElementById('otp-input').value;
+    async function verifyOTP(filterVal = "") {
+      const otp = document.getElementById('otp-input').value || currentOTP;
       if (!otp) return;
 
+      currentOTP = otp;
       const btn = document.getElementById('btn-verify');
       btn.ariaBusy = "true";
 
       try {
-        const res = await fetch(`${API_URL}?action=verifyOTP&email=${encodeURIComponent(currentInput)}&otp=${encodeURIComponent(otp)}`).then(r => r.json());
+        const filterParam = filterVal ? `&filterGuest=${encodeURIComponent(filterVal)}` : "";
+        const res = await fetch(`${API_URL}?action=verifyOTP&email=${encodeURIComponent(currentInput)}&otp=${encodeURIComponent(otp)}${filterParam}`).then(r => r.json());
         btn.ariaBusy = "false";
 
         if (res.found) {
@@ -206,6 +220,10 @@
           document.getElementById('dashboard-box').classList.remove('hidden');
 
           document.getElementById('gast-name').innerText = res.gast;
+
+          if (res.isAdmin) {
+            document.getElementById('admin-panel').classList.remove('hidden');
+          }
 
           const listContainer = document.getElementById('bookings-list');
           listContainer.innerHTML = "";
@@ -223,6 +241,7 @@
                     <span class="badge">${b.status}</span>
                   </div>
                   <div style="font-size:0.9rem; color:var(--pico-muted-color);">
+                    Gast / Firma: <strong>${b.gast}</strong><br>
                     Zeitraum: <strong>${b.anreise}</strong> bis <strong>${b.abreise}</strong><br>
                     Buchungs-ID: <code>${b.lodgifyId}</code> | Rechnungs-ID: <code>${b.rechnungId}</code>
                   </div>
@@ -233,7 +252,7 @@
               `;
             });
           } else {
-            listContainer.innerHTML = "<p>Keine aktiven Buchungen gefunden.</p>";
+            listContainer.innerHTML = "<p>Keine passenden Buchungen gefunden.</p>";
           }
 
           renderIcons();
@@ -244,6 +263,11 @@
         btn.ariaBusy = "false";
         showMsg('otp-msg', 'Fehler beim Anmelden.');
       }
+    }
+
+    function applyAdminFilter() {
+      const val = document.getElementById('admin-filter-input').value;
+      verifyOTP(val);
     }
 
     function toggleSection(id) {
