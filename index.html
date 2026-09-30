@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gästeportal | L8 Street</title>
+  
+  <!-- FAVICON -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔑</text></svg>">
+  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.slate.min.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -146,7 +150,7 @@
           document.getElementById('otp-box').classList.add('hidden');
           document.getElementById('dashboard-box').classList.remove('hidden');
 
-          document.getElementById('gast-name').innerText = res.gast;
+          document.getElementById('gast-name').innerText = res.gast || "Gast";
 
           if (res.isAdmin) {
             document.getElementById('admin-panel').classList.remove('hidden');
@@ -176,13 +180,14 @@
         let invoicesHtml = "";
         if (b.invoices && b.invoices.length > 0) {
           b.invoices.forEach(inv => {
+            const rechnungTxt = (inv.rechnungId && inv.rechnungId !== "undefined") ? inv.rechnungId : "Abrechnung";
             const btn = inv.pdfUrl && inv.pdfUrl.startsWith('http')
               ? `<a href="${inv.pdfUrl}" target="_blank" class="outline contrast btn-icon" style="padding:0.2rem 0.5rem;"><i data-lucide="file-down"></i> PDF Download</a>`
-              : `<small style="color:var(--pico-muted-color);">PDF in Bearbeitung</small>`;
+              : `<small style="color:var(--pico-muted-color);">PDF wird vorbereitet...</small>`;
 
             invoicesHtml += `
               <div class="invoice-item">
-                <span>Rechnung: <code>${inv.rechnungId}</code></span>
+                <span>Rechnung: <code>${rechnungTxt}</code></span>
                 ${btn}
               </div>
             `;
@@ -191,12 +196,14 @@
           invoicesHtml = `<small style="color:var(--pico-muted-color);">Keine Rechnungen hinterlegt.</small>`;
         }
 
+        const wohnungTxt = (b.wohnungTitle && b.wohnungTitle !== "undefined") ? b.wohnungTitle : ("Apartment " + (b.aptCode || "").toUpperCase());
+
         listContainer.innerHTML += `
           <div class="booking-card">
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
               <div>
                 <h3 style="margin:0; font-size:1.15rem; display:flex; align-items:center; gap:0.4rem;">
-                  <i data-lucide="building" style="color:var(--pico-primary); width:20px;"></i> ${b.wohnungTitle}
+                  <i data-lucide="building" style="color:var(--pico-primary); width:20px;"></i> ${wohnungTxt}
                 </h3>
                 <div style="font-size:0.85rem; color:var(--pico-muted-color); margin-top:0.2rem;">
                   ${b.wohnungAddress}<br>
