@@ -207,12 +207,15 @@
 
           document.getElementById('gast-name').innerText = res.gast;
 
-          // Multi-Buchungen auflisten
           const listContainer = document.getElementById('bookings-list');
           listContainer.innerHTML = "";
 
           if (res.bookings && res.bookings.length > 0) {
             res.bookings.forEach((b) => {
+              const downloadBtn = b.pdfUrl && b.pdfUrl.startsWith('http') 
+                ? `<a href="${b.pdfUrl}" target="_blank" role="button" class="outline contrast" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.5rem;"><i data-lucide="file-down" style="width:14px;"></i> Rechnung (PDF) herunterladen</a>`
+                : `<span style="font-size:0.8rem; color:var(--pico-muted-color); display:block; margin-top:0.4rem;">PDF wird vorbereitet...</span>`;
+
               listContainer.innerHTML += `
                 <div class="booking-card">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
@@ -222,6 +225,9 @@
                   <div style="font-size:0.9rem; color:var(--pico-muted-color);">
                     Zeitraum: <strong>${b.anreise}</strong> bis <strong>${b.abreise}</strong><br>
                     Buchungs-ID: <code>${b.lodgifyId}</code> | Rechnungs-ID: <code>${b.rechnungId}</code>
+                  </div>
+                  <div>
+                    ${downloadBtn}
                   </div>
                 </div>
               `;
