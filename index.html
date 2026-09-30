@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gästeportal | L8 Street</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.slate.min.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root { --pico-font-size: 95%; }
+    .hidden { display: none !important; }
+    .portal-card { max-width: 600px; margin: 2rem auto; }
+    .badge { background: var(--pico-primary); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; }
+    .action-box { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    .notice-box { background: #fff3cd; color: #856404; padding: 0.8rem; border-radius: 6px; font-size: 0.85rem; margin: 0.8rem 0; }
+  </style>
+</head>
+<body>
+
+  <header class="container" style="padding-top: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--pico-border-color);">
+    <nav>
+      <ul><li><strong>L8 Street</strong> <small style="color:var(--pico-muted-color);">Gästeportal</small></li></ul>
+      <ul><li><a href="https://a.l8street.com" role="button" class="outline contrast" style="padding:0.3rem 0.8rem; font-size:0.85rem;">Zur Website ↗</a></li></ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="portal-card">
+
+      <!-- STEP 1: EMAIL EINGABE -->
+      <div id="email-box">
+        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="key-round"></i> Portal Login</h2>
+        <p>Geben Sie Ihre gebuchte E-Mail-Adresse ein, um einen 6-stelligen Sicherheitscode zu erhalten:</p>
+        <input type="email" id="email-input" placeholder="z. B. einkauf@musterbau.de">
+        <button onclick="requestOTP()" id="btn-request">Code anfordern</button>
+        <p id="email-msg" style="color:var(--pico-del-color);" class="hidden"></p>
+      </div>
+
+      <!-- STEP 2: OTP EINGABE -->
+      <div id="otp-box" class="hidden">
+        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="shield-check"></i> Code eingeben</h2>
+        <p>Wir haben einen 6-stelligen Code an Ihre E-Mail geschickt.</p>
+        <input type="text" id="otp-input" placeholder="6-stelliger Code">
+        <button onclick="verifyOTP()" id="btn-verify">Anmelden</button>
+        <p id="otp-msg" style="color:var(--pico-del-color);" class="hidden"></p>
+      </div>
+
+      <!-- STEP 3: DASHBOARD -->
+      <div id="dashboard-box" class="hidden">
+        <h2>Willkommen, <span id="gast-name"></span></h2>
+
+        <div style="margin-bottom: 1rem;">
+          <p><strong>Wohnung:</strong> <span id="wohnung"></span></p>
+          <p><strong>Zeitraum:</strong> <span id="anreise"></span> bis <span id="abreise"></span></p>
+          <p><strong>Status:</strong> <span id="status" class="badge"></span></p>
+          <p><strong>Rechnung:</strong> <a id="rechnung-link" href="#" target="_blank">PDF Herunterladen</a></p>
+        </div>
+
+        <hr>
+
+        <h3>Was möchten Sie tun?</h3>
+
+        <div style="display:grid; gap:0.5rem;">
+          <button class="outline" onclick="toggleSection('extend-form')">📅 Buchung verlängern</button>
+          <button class="outline" onclick="toggleSection('cancel-form')">❌ Buchung stornieren</button>
+          <button class="outline" onclick="toggleSection('wgb-form')">📄 Wohnungsgeberbestätigung beantragen</button>
+          <button class="outline" onclick="toggleSection('address-form')">🏢 Zweite Rechnungsanschrift hinzufügen</button>
+        </div>
+
+        <!-- FORMULAR 1: VERLÄNGERN -->
+        <div id="extend-form" class="action-box hidden">
+          <h4>Buchung verlängern</h4>
+          <label>Neues Enddatum:
+            <input type="date" id="ext-date">
+          </label>
+          <label>Abrechnungsrhythmus:
+            <select id="ext-rhythm">
+              <option value="Alle 7 Tage">Alle 7 Tage</option>
+              <option value="Alle 14 Tage">Alle 14 Tage</option>
+              <option value="Alle 30 Tage">Alle 30 Tage</option>
+            </select>
+          </label>
+          <label>
+            <input type="checkbox" id="ext-agb"> Ich bestätige die AGB und die verbindlichen Stornobedingungen für die Verlängerung.
+          </label>
+          <button onclick="submitExtend()">Verlängerung kostenpflichtig anfragen</button>
+        </div>
+
+        <!-- FORMULAR 2: STORNIEREN -->
+        <div id="cancel-form" class="action-box hidden">
+          <h4>Buchung stornieren</h4>
+          <div id="storno-rules" class="notice-box"></div>
+          <label>Auswahl:
+            <select id="cancel-type" onchange="toggleCancelDate(this.value)">
+              <option value="Wohnung ab sofort frei">Wohnung ist ab sofort frei</option>
+              <option value="Auszugsdatum wählen">Auszugsdatum wählen</option>
+            </select>
+          </label>
+          <div id="cancel-date-div" class="hidden">
+            <label>Geplantes Auszugsdatum:
+              <input type="date" id="cancel-date">
+            </label>
+          </div>
+          <button style="background-color: var(--pico-del-color); border-color: var(--pico-del-color);" onclick="submitCancel()">Stornierung übermitteln</button>
+        </div>
+
+        <!-- FORMULAR 3: WGB -->
+        <div id="wgb-form" class="action-box hidden">
+          <h4>Wohnungsgeberbestätigung</h4>
+          <label>Namen aller einziehenden Personen:
+            <textarea id="wgb-names" placeholder="Max Mustermann, Erika Mustermann"></textarea>
+          </label>
+          <label>Einzugsdatum:
+            <input type="date" id="wgb-date">
+          </label>
+          <button onclick="submitWGB()">WGB Beantragen</button>
+        </div>
+
+        <!-- FORMULAR 4: RECHNUNGSANSCHRIFT -->
+        <div id="address-form" class="action-box hidden">
+          <h4>Weitere Rechnungsanschrift</h4>
+          <label>Firmenname / Name:
+            <input type="text" id="addr-company" placeholder="Muster Firma GmbH">
+          </label>
+          <label>Vollständige Anschrift:
+            <textarea id="addr-text" placeholder="Straße, Nr., PLZ, Ort"></textarea>
+          </label>
+          <div class="notice-box">
+            <strong>Wichtiger Hinweis:</strong> Die ursprünglich buchende Firma bleibt bis zur finalen Abreise voll haftbar für alle Forderungen.
+          </div>
+          <label>
+            <input type="checkbox" id="addr-confirm"> Ich bestätige, dass die ursprüngliche Firma weiterhin haftbar bleibt.
+          </label>
+          <button onclick="submitAddress()">Zweite Anschrift hinterlegen</button>
+        </div>
+
+        <p id="action-msg" style="color:var(--pico-ins-color); font-weight:bold; text-align:center; margin-top:15px;"></p>
+      </div>
+
+    </article>
+  </main>
+
+  <script>
+    // DEINE APPS SCRIPT EXEC URL:
+    const API_URL = "https://script.google.com/macros/s/AKfycbwlEvmXJwyzfjAP0CHX5_8Br1cVWuHbVlmGZY2vsHEjMiSocFEjWuIC-O6611NqFY48/exec";
+    let currentEmail = "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
+    async function requestOTP() {
+      const email = document.getElementById('email-input').value;
+      if (!email) return;
+
+      const btn = document.getElementById('btn-request');
+      btn.ariaBusy = "true";
+
+      try {
+        const res = await fetch(`${API_URL}?action=requestOTP&email=${encodeURIComponent(email)}`).then(r => r.json());
+        btn.ariaBusy = "false";
+
+        if (res.success) {
+          currentEmail = email;
+          document.getElementById('email-box').classList.add('hidden');
+          document.getElementById('otp-box').classList.remove('hidden');
+        } else {
+          showMsg('email-msg', res.message);
+        }
+      } catch (err) {
+        btn.ariaBusy = "false";
+        showMsg('email-msg', 'Fehler bei der Verbindung zum Server.');
+      }
+    }
+
+    async function verifyOTP() {
+      const otp = document.getElementById('otp-input').value;
+      if (!otp) return;
+
+      const btn = document.getElementById('btn-verify');
+      btn.ariaBusy = "true";
+
+      try {
+        const res = await fetch(`${API_URL}?action=verifyOTP&email=${encodeURIComponent(currentEmail)}&otp=${encodeURIComponent(otp)}`).then(r => r.json());
+        btn.ariaBusy = "false";
+
+        if (res.found) {
+          document.getElementById('otp-box').classList.add('hidden');
+          document.getElementById('dashboard-box').classList.remove('hidden');
+
+          document.getElementById('gast-name').innerText = res.gast;
+          document.getElementById('wohnung').innerText = res.wohnung;
+          document.getElementById('anreise').innerText = res.anreise;
+          document.getElementById('abreise').innerText = res.abreise;
+          document.getElementById('status').innerText = res.status;
+
+          if (res.rechnung) {
+            document.getElementById('rechnung-link').href = res.rechnung;
+          } else {
+            document.getElementById('rechnung-link').innerText = "Keine Rechnung vorhanden";
+            document.getElementById('rechnung-link').removeAttribute('href');
+          }
+
+          setupStornoRules(res.anreiseRaw, res.abreiseRaw);
+        } else {
+          showMsg('otp-msg', res.message);
+        }
+      } catch (err) {
+        btn.ariaBusy = "false";
+        showMsg('otp-msg', 'Fehler beim Anmelden.');
+      }
+    }
+
+    function toggleSection(id) {
+      ['extend-form', 'cancel-form', 'wgb-form', 'address-form'].forEach(sec => {
+        const el = document.getElementById(sec);
+        if (sec === id) {
+          el.classList.toggle('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+    }
+
+    function toggleCancelDate(val) {
+      if (val === 'Auszugsdatum wählen') {
+        document.getElementById('cancel-date-div').classList.remove('hidden');
+      } else {
+        document.getElementById('cancel-date-div').classList.add('hidden');
+      }
+    }
+
+    function setupStornoRules(anreiseStr, abreiseStr) {
+      const d1 = new Date(anreiseStr);
+      const d2 = new Date(abreiseStr);
+      const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+
+      const stornoBox = document.getElementById('storno-rules');
+      if (diffDays < 7) {
+        stornoBox.innerHTML = "<strong>Storno-Frist:</strong> Bei Buchungen unter 7 Tagen ist eine kostenfreie Stornierung bis <strong>7 Tage</strong> vor Beginn möglich.";
+      } else {
+        stornoBox.innerHTML = "<strong>Storno-Frist:</strong> Kostenfreie Stornierung ist bis <strong>14 Tage</strong> vor Beginn des Abrechnungszeitraums möglich.";
+      }
+    }
+
+    function submitExtend() {
+      const date = document.getElementById('ext-date').value;
+      const rhythm = document.getElementById('ext-rhythm').value;
+      const agb = document.getElementById('ext-agb').checked;
+
+      if (!date || !agb) {
+        alert("Bitte wählen Sie ein Datum und bestätigen Sie die AGB.");
+        return;
+      }
+      sendAction('extend', { endDate: date, rhythm: rhythm });
+    }
+
+    function submitCancel() {
+      const type = document.getElementById('cancel-type').value;
+      const date = document.getElementById('cancel-date').value;
+      if (type === 'Auszugsdatum wählen' && !date) {
+        alert("Bitte wählen Sie ein Auszugsdatum.");
+        return;
+      }
+      sendAction('cancel', { type: type, date: date || 'Ab sofort' });
+    }
+
+    function submitWGB() {
+      const names = document.getElementById('wgb-names').value;
+      const date = document.getElementById('wgb-date').value;
+      if (!names || !date) {
+        alert("Bitte tragen Sie die Namen und das Datum ein.");
+        return;
+      }
+      sendAction('wgb', { names: names, moveInDate: date });
+    }
+
+    function submitAddress() {
+      const company = document.getElementById('addr-company').value;
+      const text = document.getElementById('addr-text').value;
+      const confirm = document.getElementById('addr-confirm').checked;
+
+      if (!company || !text || !confirm) {
+        alert("Bitte füllen Sie alle Felder aus und bestätigen Sie den Haftungshinweis.");
+        return;
+      }
+      sendAction('address', { company: company, address: text });
+    }
+
+    async function sendAction(actionType, payload) {
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'submitGuestAction',
+            email: currentEmail,
+            actionType: actionType,
+            payload: payload
+          })
+        }).then(r => r.json());
+
+        if (res.success) {
+          document.getElementById('action-msg').innerText = res.message;
+          toggleSection('');
+        }
+      } catch (err) {
+        alert("Fehler beim Übermitteln der Anfrage.");
+      }
+    }
+
+    function showMsg(id, text) {
+      const el = document.getElementById(id);
+      el.innerText = text;
+      el.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
