@@ -10,9 +10,12 @@
     :root { --pico-font-size: 95%; }
     .hidden { display: none !important; }
     .portal-card { max-width: 600px; margin: 2rem auto; }
-    .badge { background: var(--pico-primary); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; }
-    .action-box { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
-    .notice-box { background: #fff3cd; color: #856404; padding: 0.8rem; border-radius: 6px; font-size: 0.85rem; margin: 0.8rem 0; }
+    .badge { background: var(--pico-primary); color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
+    .action-box { background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 10px; padding: 1.2rem; margin-top: 1rem; }
+    .notice-box { background: #fff3cd; color: #856404; padding: 0.8rem; border-radius: 6px; font-size: 0.85rem; margin: 0.8rem 0; border: 1px solid #ffeeba; }
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; text-align: center; }
+    .btn-icon svg { width: 18px; height: 18px; stroke-width: 2; }
+    .info-grid { display: grid; gap: 0.5rem; background: var(--pico-card-background-color); border: 1px solid var(--pico-border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
   </style>
 </head>
 <body>
@@ -29,19 +32,23 @@
 
       <!-- STEP 1: EMAIL EINGABE -->
       <div id="email-box">
-        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="key-round"></i> Portal Login</h2>
+        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="key-round" style="color:var(--pico-primary);"></i> Portal Login</h2>
         <p>Geben Sie Ihre gebuchte E-Mail-Adresse ein, um einen 6-stelligen Sicherheitscode zu erhalten:</p>
         <input type="email" id="email-input" placeholder="z. B. einkauf@musterbau.de">
-        <button onclick="requestOTP()" id="btn-request">Code anfordern</button>
+        <button onclick="requestOTP()" id="btn-request" class="btn-icon">
+          <i data-lucide="send"></i> Code anfordern
+        </button>
         <p id="email-msg" style="color:var(--pico-del-color);" class="hidden"></p>
       </div>
 
       <!-- STEP 2: OTP EINGABE -->
       <div id="otp-box" class="hidden">
-        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="shield-check"></i> Code eingeben</h2>
+        <h2 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="shield-check" style="color:var(--pico-primary);"></i> Code eingeben</h2>
         <p>Wir haben einen 6-stelligen Code an Ihre E-Mail geschickt.</p>
         <input type="text" id="otp-input" placeholder="6-stelliger Code">
-        <button onclick="verifyOTP()" id="btn-verify">Anmelden</button>
+        <button onclick="verifyOTP()" id="btn-verify" class="btn-icon">
+          <i data-lucide="log-in"></i> Anmelden
+        </button>
         <p id="otp-msg" style="color:var(--pico-del-color);" class="hidden"></p>
       </div>
 
@@ -49,27 +56,35 @@
       <div id="dashboard-box" class="hidden">
         <h2>Willkommen, <span id="gast-name"></span></h2>
 
-        <div style="margin-bottom: 1rem;">
-          <p><strong>Wohnung:</strong> <span id="wohnung"></span></p>
-          <p><strong>Zeitraum:</strong> <span id="anreise"></span> bis <span id="abreise"></span></p>
-          <p><strong>Status:</strong> <span id="status" class="badge"></span></p>
-          <p><strong>Rechnung:</strong> <a id="rechnung-link" href="#" target="_blank">PDF Herunterladen</a></p>
+        <div class="info-grid">
+          <div><strong>Wohnung:</strong> <span id="wohnung"></span></div>
+          <div><strong>Zeitraum:</strong> <span id="anreise"></span> bis <span id="abreise"></span></div>
+          <div><strong>Status:</strong> <span id="status" class="badge"></span></div>
+          <div><strong>Rechnung:</strong> <a id="rechnung-link" href="#" target="_blank" style="display:inline-flex; align-items:center; gap:0.3rem;"><i data-lucide="file-down" style="width:16px;"></i> PDF Herunterladen</a></div>
         </div>
 
-        <hr>
+        <hr style="margin: 1.5rem 0;">
 
         <h3>Was möchten Sie tun?</h3>
 
-        <div style="display:grid; gap:0.5rem;">
-          <button class="outline" onclick="toggleSection('extend-form')">📅 Buchung verlängern</button>
-          <button class="outline" onclick="toggleSection('cancel-form')">❌ Buchung stornieren</button>
-          <button class="outline" onclick="toggleSection('wgb-form')">📄 Wohnungsgeberbestätigung beantragen</button>
-          <button class="outline" onclick="toggleSection('address-form')">🏢 Zweite Rechnungsanschrift hinzufügen</button>
+        <div style="display:grid; gap:0.6rem;">
+          <button class="outline btn-icon" onclick="toggleSection('extend-form')">
+            <i data-lucide="calendar-plus"></i> Buchung verlängern
+          </button>
+          <button class="outline btn-icon" onclick="toggleSection('cancel-form')">
+            <i data-lucide="calendar-x"></i> Buchung stornieren
+          </button>
+          <button class="outline btn-icon" onclick="toggleSection('wgb-form')">
+            <i data-lucide="file-text"></i> Wohnungsgeberbestätigung beantragen
+          </button>
+          <button class="outline btn-icon" onclick="toggleSection('address-form')">
+            <i data-lucide="building-2"></i> Zweite Rechnungsanschrift hinzufügen
+          </button>
         </div>
 
         <!-- FORMULAR 1: VERLÄNGERN -->
         <div id="extend-form" class="action-box hidden">
-          <h4>Buchung verlängern</h4>
+          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="calendar-plus"></i> Buchung verlängern</h4>
           <label>Neues Enddatum:
             <input type="date" id="ext-date">
           </label>
@@ -83,12 +98,12 @@
           <label>
             <input type="checkbox" id="ext-agb"> Ich bestätige die AGB und die verbindlichen Stornobedingungen für die Verlängerung.
           </label>
-          <button onclick="submitExtend()">Verlängerung kostenpflichtig anfragen</button>
+          <button onclick="submitExtend()" class="btn-icon"><i data-lucide="check-circle"></i> Verlängerung kostenpflichtig anfragen</button>
         </div>
 
         <!-- FORMULAR 2: STORNIEREN -->
         <div id="cancel-form" class="action-box hidden">
-          <h4>Buchung stornieren</h4>
+          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="calendar-x"></i> Buchung stornieren</h4>
           <div id="storno-rules" class="notice-box"></div>
           <label>Auswahl:
             <select id="cancel-type" onchange="toggleCancelDate(this.value)">
@@ -101,24 +116,24 @@
               <input type="date" id="cancel-date">
             </label>
           </div>
-          <button style="background-color: var(--pico-del-color); border-color: var(--pico-del-color);" onclick="submitCancel()">Stornierung übermitteln</button>
+          <button style="background-color: var(--pico-del-color); border-color: var(--pico-del-color);" onclick="submitCancel()" class="btn-icon"><i data-lucide="alert-triangle"></i> Stornierung übermitteln</button>
         </div>
 
         <!-- FORMULAR 3: WGB -->
         <div id="wgb-form" class="action-box hidden">
-          <h4>Wohnungsgeberbestätigung</h4>
+          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="file-text"></i> Wohnungsgeberbestätigung</h4>
           <label>Namen aller einziehenden Personen:
             <textarea id="wgb-names" placeholder="Max Mustermann, Erika Mustermann"></textarea>
           </label>
           <label>Einzugsdatum:
             <input type="date" id="wgb-date">
           </label>
-          <button onclick="submitWGB()">WGB Beantragen</button>
+          <button onclick="submitWGB()" class="btn-icon"><i data-lucide="send"></i> WGB Beantragen</button>
         </div>
 
         <!-- FORMULAR 4: RECHNUNGSANSCHRIFT -->
         <div id="address-form" class="action-box hidden">
-          <h4>Weitere Rechnungsanschrift</h4>
+          <h4 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="building-2"></i> Weitere Rechnungsanschrift</h4>
           <label>Firmenname / Name:
             <input type="text" id="addr-company" placeholder="Muster Firma GmbH">
           </label>
@@ -131,7 +146,7 @@
           <label>
             <input type="checkbox" id="addr-confirm"> Ich bestätige, dass die ursprüngliche Firma weiterhin haftbar bleibt.
           </label>
-          <button onclick="submitAddress()">Zweite Anschrift hinterlegen</button>
+          <button onclick="submitAddress()" class="btn-icon"><i data-lucide="save"></i> Zweite Anschrift hinterlegen</button>
         </div>
 
         <p id="action-msg" style="color:var(--pico-ins-color); font-weight:bold; text-align:center; margin-top:15px;"></p>
@@ -141,13 +156,16 @@
   </main>
 
   <script>
-    // DEINE APPS SCRIPT EXEC URL:
     const API_URL = "https://script.google.com/macros/s/AKfycbwlEvmXJwyzfjAP0CHX5_8Br1cVWuHbVlmGZY2vsHEjMiSocFEjWuIC-O6611NqFY48/exec";
     let currentEmail = "";
 
     document.addEventListener("DOMContentLoaded", () => {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      renderIcons();
     });
+
+    function renderIcons() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
     async function requestOTP() {
       const email = document.getElementById('email-input').value;
@@ -164,6 +182,7 @@
           currentEmail = email;
           document.getElementById('email-box').classList.add('hidden');
           document.getElementById('otp-box').classList.remove('hidden');
+          renderIcons();
         } else {
           showMsg('email-msg', res.message);
         }
@@ -202,6 +221,7 @@
           }
 
           setupStornoRules(res.anreiseRaw, res.abreiseRaw);
+          renderIcons();
         } else {
           showMsg('otp-msg', res.message);
         }
@@ -220,6 +240,7 @@
           el.classList.add('hidden');
         }
       });
+      renderIcons();
     }
 
     function toggleCancelDate(val) {
